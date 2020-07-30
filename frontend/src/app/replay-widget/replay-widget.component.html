@@ -1,0 +1,19 @@
+<div id="replay-widget-container" (mouseenter)="signalCapturingMouseEvents(true)"
+    (mouseleave)="signalCapturingMouseEvents(false)" style="font-size: small;">
+    <div style="display: inline-flex; border-style: solid; width:98%">
+         <button mat-mini-fab
+            style="margin-top:10px; margin-right: 5px;margin-left: 5px; background-color:#007100; color:white" (click)="onPlayClicked()">
+            <mat-icon *ngIf="stopped">play_arrow</mat-icon>
+            <mat-icon *ngIf="playing">pause</mat-icon>
+        </button> <button mat-mini-fab style="margin-top:10px; margin-right: 5px; background-color:darkred; color: white" 
+            (click)="onStopClicked()">
+            <mat-icon>stop</mat-icon>
+        </button>
+        <div>
+            <mat-slider id="slider-replay" style="margin:8px" [ngModel]="currentTime" thumbLabel
+                (change)="onSetTime($event.value)" min="1588844234839" max="1588846034842" step="1" [tickInterval]="1"
+                [displayWith]="displayTime" [min]="replayMinUnix" [max]="replayMaxUnix"> </mat-slider>
+            <mat-label>{{displayTime(currentTime)}}</mat-label>
+        </div>
+    </div>
+</div>

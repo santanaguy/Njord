@@ -1,0 +1,376 @@
+<div style="border-color: blanchedalmond; border-width: 2px; border-style: solid;">
+  <div style="display: flex; justify-content: space-between;">
+    <span style="padding-left: 8px; padding-top:8px;">
+      <mat-icon *ngIf="generator.type == positionGeneratorTypes.Fixed">place</mat-icon>
+      <mat-icon *ngIf="generator.type == positionGeneratorTypes.LineString">linear_scale</mat-icon>
+      <mat-icon *ngIf="generator.type == positionGeneratorTypes.SpeedBearing">merge_type</mat-icon>
+    </span>
+    <input #nameInput matInput style="margin-left:10px; font-size: large;" type="text"
+      [(ngModel)]="generator.description" />
+    <button mat-icon-button tabindex="-1" [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item [matMenuTriggerFor]="convertTo" [disabled]="!scenarioFacade.canSetGeneratorType">Position
+        type</button>
+      <mat-menu #convertTo="matMenu">
+        <button mat-menu-item *ngIf="generator.type != positionGeneratorTypes.LineString"
+          (click)="guiConvertToLineString()">
+          <mat-icon>linear_scale</mat-icon>
+          <span>Route</span>
+        </button>
+        <button mat-menu-item *ngIf="generator.type != positionGeneratorTypes.Fixed" (click)="guiConvertToFixed()">
+          <mat-icon>place</mat-icon>
+          <span>Fixed position</span>
+        </button>
+        <button mat-menu-item *ngIf="generator.type != positionGeneratorTypes.SpeedBearing"
+          (click)="guiConvertToSpeedBearing()">
+          <mat-icon>merge_type</mat-icon>
+          <span>Sog/Cog</span>
+        </button>
+        <mat-divider></mat-divider>
+      </mat-menu>
+      <button mat-menu-item (click)="guiDuplicate()" [disabled]="!scenarioFacade.canDuplicateGenerator">
+        <mat-icon>file_copy</mat-icon>
+        <span>Duplicate</span>
+      </button>
+      <button mat-menu-item (click)="guiDelete()" [disabled]="!scenarioFacade.canDeleteGenerator">
+        <mat-icon style="color:red">delete</mat-icon>
+        <span>Delete</span>
+      </button>
+      <button mat-menu-item (click)="guiPrintClicked()">
+        <mat-icon>print</mat-icon>
+        <span>Print</span>
+      </button>
+    </mat-menu>
+
+    <button mat-button (click)="guiToggleCollapsed()">
+      <mat-icon *ngIf="collapsed">keyboard_arrow_down</mat-icon>
+      <mat-icon *ngIf="!collapsed">keyboard_arrow_up</mat-icon>
+    </button>
+  </div>
+  <mat-divider></mat-divider>
+  <div [ngStyle]="{'display':collapsed ? 'none' : 'inline-block'}" style="height: 460px;">
+    <mat-tab-group>
+      <mat-tab label="Common">
+        <div style="padding-left: 20px; background-color: #424242;">
+          <div style="display: flex; flex-wrap: wrap; font-size: 12px;">
+            <div style="align-self: flex-start; " *ngIf="generator.type != positionGeneratorTypes.LineString">
+              <mat-label style="align-self: center; padding-right: 10px;">Position</mat-label>
+              <mat-form-field appearance="outline" class="control-margins"
+                style="width: 30%; margin-top: 10px; margin-bottom: 0px;">
+                <mat-label>latitude</mat-label>
+                <input matInput type="number" [ngModel]="generator.position.lat"
+                  (change)="guiLatitudeChanged($event.target.value)">
+              </mat-form-field>
+              <mat-form-field appearance="outline" style="width: 30%; margin-top: 10px; margin-bottom: 0px;">
+                <mat-label>longitude</mat-label>
+                <input matInput type="number" [ngModel]="generator.position.lon"
+                  (change)="guiLongitudeChanged($event.target.value)">
+              </mat-form-field>
+              <button mat-stroked-button matTooltip="Select on map" style="margin-left: 10px;"
+                (click)="guiButtonDrawPointClicked()" [disabled]="!allowDrawPosition">
+                <mat-icon>place</mat-icon>
+              </button>
+            </div>
+            <div style="align-self: flex-start; " *ngIf="generator.type == positionGeneratorTypes.LineString">
+              <mat-form-field appearance="outline" class="control-margins"
+                style="margin-top: 10px; margin-bottom: 0px; width:382px">
+                <mat-label>Route</mat-label>
+                <input matInput type="text" [ngModel]="generator.routeAsLineString()" readonly>
+                <mat-hint *ngIf="generator.type == positionGeneratorTypes.LineString">{{generator.route.length}} positions</mat-hint>
+              </mat-form-field>
+              <button mat-stroked-button matTooltip="Select on map" style="margin-left: 10px;"
+                (click)="guiButtonDrawRouteClicked()" [disabled]="!allowDrawPosition" *ngIf="!generator.hasRoute()">
+                <mat-icon>linear_scale</mat-icon>
+              </button>
+              <button mat-stroked-button matTooltip="Select on map" style="margin-left: 10px;"
+                (click)="guiButtonEditRouteClicked()" *ngIf="generator.hasRoute() && allowDrawPosition">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-stroked-button matTooltip="Confirm" style="margin-left: 10px;" *ngIf="editingRoute"
+                (click)="guiButtonConfirmRouteClicked()">
+                <mat-icon>done</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; font-size:12px">
+            <mat-label style="align-self: center; padding-right: 10px;">Every</mat-label>
+            <mat-form-field style="width: 40px; margin-top: 10px; margin-bottom: 0px; margin-right: 10px;">
+              <input matInput type="number" [(ngModel)]="interval" (change)="guiIntervalChanged(generator.intervalMultiplier)" />
+            </mat-form-field>
+            <mat-form-field style="width: 20%; margin-top: 10px; margin-bottom: 0px;">
+              <mat-select (value)="generator.intervalMultiplier" [value]="generator.intervalMultiplier.toString()" (valueChange)="guiIntervalChanged($event)">
+                <mat-option value="1000">seconds</mat-option>
+                <mat-option value="60000">minutes</mat-option>
+                <mat-option value="3600000">hours</mat-option>
+                <mat-option value="86400000">days</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-label style="align-self: center; margin-left: 10px; padding-right: 10px;">for</mat-label>
+            <mat-form-field style="width: 40px; margin-top: 10px; margin-bottom: 0px; margin-right: 10px;">
+              <input matInput type="number" [(ngModel)]="duration" (change)="guiDurationChanged(generator.durationMultiplier)" /></mat-form-field>
+            <mat-form-field style="width: 20%; margin-top: 10px; margin-bottom: 0px;">
+              <mat-select (value)="generator.durationMultiplier" [value]="generator.durationMultiplier.toString()" (valueChange)="guiDurationChanged($event)">
+                <mat-option value="1000">seconds</mat-option>
+                <mat-option value="60000">minutes</mat-option>
+                <mat-option value="3600000">hours</mat-option>
+                <mat-option value="86400000">days</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div style="font-size: 12px;">
+            <mat-form-field appearance="outline" class="control-margins" style="width: 20%;">
+              <mat-label>MMSI</mat-label>
+              <input matInput type="number" [(ngModel)]="generator.mmsi">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 20%;">
+              <mat-label>Call Sign</mat-label>
+              <input matInput type="text" [(ngModel)]="generator.callsign">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 50%;">
+              <mat-label>Track Number</mat-label>
+              <input matInput type="number" [(ngModel)]="generator.trackNumber">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 43%;">
+              <mat-label>Name</mat-label>
+              <input matInput type="text" [(ngModel)]="generator.name">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width:11%">
+              <mat-label>SOG</mat-label>
+              <input matInput type="number" placeholder="Knots" [(ngModel)]="generator.speedOverGroundKnots">
+              <mat-hint>Knots</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 11%;">
+              <mat-label>COG</mat-label>
+              <input matInput type="number" placeholder="Degrees" [(ngModel)]="generator.courseOverGroundDegrees"
+                (change)="guiCogChanged()">
+              <mat-hint>Degrees</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 10%;">
+              <mat-label>ROT</mat-label>
+              <input matInput type="number" placeholder="Degrees per second"
+                [(ngModel)]="generator.rateOfTurnDegreesPerSecond">
+              <mat-hint>Degrees</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" style="width: 11%;" class="control-margins">
+              <mat-label>HDG</mat-label>
+              <input matInput type="number" placeholder="Degrees" [(ngModel)]="generator.trueHeadingDegrees">
+              <mat-hint>Degrees</mat-hint>
+            </mat-form-field>
+            <mat-form-field class="control-margins" style="width: 45%;">
+              <mat-label>Navigation Status</mat-label>
+              <mat-select [(value)]="generator.navStatus">
+                <mat-option>None</mat-option>
+                <mat-option value="Aground">Aground</mat-option>
+                <mat-option value="UnderwayUsingEngine">UnderwayUsingEngine</mat-option>
+                <mat-option value="AtAnchor">AtAnchor</mat-option>
+                <mat-option value="NotUnderCommand">NotUnderCommand</mat-option>
+                <mat-option value="RestrictedManeuver">RestrictedManeuver</mat-option>
+                <mat-option value="ConstrainedByDraught">ConstrainedByDraught</mat-option>
+                <mat-option value="Moored">Moored</mat-option>
+                <mat-option value="Aground">Aground</mat-option>
+                <mat-option value="EngagedInFishing">EngagedInFishing</mat-option>
+                <mat-option value="UnderwaySailing">UnderwaySailing</mat-option>
+                <mat-option value="ReservedForFutureAmmendmentHSC">ReservedForFutureAmmendmentHSC
+                </mat-option>
+                <mat-option value="ReservedForFutureAmmendmentWIG">ReservedForFutureAmmendmentWIG
+                </mat-option>
+                <mat-option value="Reserved1">Reserved1</mat-option>
+                <mat-option value="Reserved2">Reserved2</mat-option>
+                <mat-option value="Reserved3">Reserved3</mat-option>
+                <mat-option value="AISSART">AISSART</mat-option>
+                <mat-option value="NotDefined">NotDefined</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="control-margins" style="width: 45%;">
+              <mat-label>Ship Type</mat-label>
+              <mat-select [(value)]="generator.shipType">
+                <mat-option>None</mat-option>
+                <mat-option value="NotAvailable">NotAvailable</mat-option>
+                <mat-option value="WIGAllShips">WIGAllShips</mat-option>
+                <mat-option value="Fishing">Fishing</mat-option>
+                <mat-option value="Towing">Towing</mat-option>
+                <mat-option value="TowingBig">TowingBig</mat-option>
+                <mat-option value="Military">Military</mat-option>
+                <mat-option value="WIGHazardousCatA">WIGHazardousCatA</mat-option>
+                <mat-option value="WIGHazardousCatB">WIGHazardousCatB</mat-option>
+                <mat-option value="WIGHazardousCatC">WIGHazardousCatC</mat-option>
+                <mat-option value="WIGHazardousCatD">WIGHazardousCatD</mat-option>
+                <mat-option value="Dredging">Dredging</mat-option>
+                <mat-option value="Diving">Diving</mat-option>
+                <mat-option value="Sailing">Sailing</mat-option>
+                <mat-option value="PleasureCraft">PleasureCraft</mat-option>
+                <mat-option value="HighSpeedAllShips">HighSpeedAllShips</mat-option>
+                <mat-option value="HighSpeedHazardousCatA">HighSpeedHazardousCatA</mat-option>
+                <mat-option value="HighSpeedHazardousCatB">HighSpeedHazardousCatB</mat-option>
+                <mat-option value="HighSpeedHazardousCatC">HighSpeedHazardousCatC</mat-option>
+                <mat-option value="HighSpeedHazardousCatD">HighSpeedHazardousCatD</mat-option>
+                <mat-option value="HighSpeedNoInfo">HighSpeedNoInfo</mat-option>
+                <mat-option value="PilotVessel">PilotVessel</mat-option>
+                <mat-option value="SearchAndRescue">SearchAndRescue</mat-option>
+                <mat-option value="Tug">Tug</mat-option>
+                <mat-option value="PortTender">PortTender</mat-option>
+                <mat-option value="AntiPollution">AntiPollution</mat-option>
+                <mat-option value="LawEnforcement">LawEnforcement</mat-option>
+                <mat-option value="SpareLocalVessel1">SpareLocalVessel1</mat-option>
+                <mat-option value="SpareLocalVessel2">SpareLocalVessel2</mat-option>
+                <mat-option value="MedicalTransport">MedicalTransport</mat-option>
+                <mat-option value="NoncombatantShip">NoncombatantShip</mat-option>
+                <mat-option value="PassengerAllShips">PassengerAllShips</mat-option>
+                <mat-option value="PassengerHazardousCatA">PassengerHazardousCatA</mat-option>
+                <mat-option value="PassengerHazardousCatB">PassengerHazardousCatB</mat-option>
+                <mat-option value="PassengerHazardousCatC">PassengerHazardousCatC</mat-option>
+                <mat-option value="PassengerHazardousCatD">PassengerHazardousCatD</mat-option>
+                <mat-option value="PassengerNoInfo">PassengerNoInfo</mat-option>
+                <mat-option value="CargoAllShips">CargoAllShips</mat-option>
+                <mat-option value="CargoHazardousCategoryA">CargoHazardousCategoryA</mat-option>
+                <mat-option value="CargoHazardousCategoryB">CargoHazardousCategoryB</mat-option>
+                <mat-option value="CargoHazardousCategoryC">CargoHazardousCategoryC</mat-option>
+                <mat-option value="CargoHazardousCategoryD">CargoHazardousCategoryD</mat-option>
+                <mat-option value="CargoNoInfo">CargoNoInfo</mat-option>
+                <mat-option value="TankerAllShips">TankerAllShips</mat-option>
+                <mat-option value="TankerHazardousCatA">TankerHazardousCatA</mat-option>
+                <mat-option value="TankerHazardousCatB">TankerHazardousCatB</mat-option>
+                <mat-option value="TankerHazardousCatC">TankerHazardousCatC</mat-option>
+                <mat-option value="TankerHazardousCatD">TankerHazardousCatD</mat-option>
+                <mat-option value="TankerNoInfo">TankerNoInfo</mat-option>
+                <mat-option value="OtherAllShipsType">OtherAllShipsType</mat-option>
+                <mat-option value="OtherHazardousCatA">OtherHazardousCatA</mat-option>
+                <mat-option value="OtherHazardousCatB">OtherHazardousCatB</mat-option>
+                <mat-option value="OtherHazardousCatC">OtherHazardousCatC</mat-option>
+                <mat-option value="OtherHazardousCatD">OtherHazardousCatD</mat-option>
+                <mat-option value="OtherNoInfo">OtherNoInfo</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="Others">
+        <div style="padding-left: 20px; background-color: #424242;">
+          <div style="font-size: 12px;">
+            <mat-form-field appearance="outline" class="control-margins" style="width:20%">
+              <mat-label>IMO</mat-label>
+              <input matInput type="number" [(ngModel)]="generator.imo">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width:55%">
+              <mat-label>Destination</mat-label>
+              <input matInput type="text" [(ngModel)]="generator.destination">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 15%;">
+              <mat-label>Draught</mat-label>
+              <input matInput type="number" placeholder="Meters" [(ngModel)]="generator.draughtMeters">
+            </mat-form-field>
+            <mat-form-field class="control-margins" style="width: 30%;">
+              <mat-label>ETA</mat-label>
+              <input matInput [matDatepicker]="myDatepicker" [(ngModel)]="etaDate"
+                (dateChange)="guiETADateChanged($event)">
+              <mat-datepicker-toggle matSuffix [for]="myDatepicker"></mat-datepicker-toggle>
+              <mat-datepicker #myDatepicker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 30%;">
+              <input matInput type="time" [(ngModel)]="etaTime" (change)="guiETATimeChanged()">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 30%;">
+              <mat-label>Source Name</mat-label>
+              <input matInput [(ngModel)]="generator.sourceName">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="control-margins" style="width: 30%;">
+              <mat-label>Source id</mat-label>
+              <input matInput type="number" placeholder="0-255" [(ngModel)]="generator.sourceId">
+            </mat-form-field>
+            <mat-form-field class="control-margins" style="width:60%">
+              <mat-label>Aid Type</mat-label>
+              <mat-select [(ngModel)]="generator.aidType">
+                <mat-option>None</mat-option>
+                <mat-option value="Default">Default</mat-option>
+                <mat-option value="ReferencePoint">ReferencePoint</mat-option>
+                <mat-option value="RACON">RACON</mat-option>
+                <mat-option value="FixedStructureOffShore">FixedStructureOffShore</mat-option>
+                <mat-option value="Spare">Spare</mat-option>
+                <mat-option value="LightWithoutSectors">LightWithoutSectors</mat-option>
+                <mat-option value="LightWithSectors">LightWithSectors</mat-option>
+                <mat-option value="LeadingLightFront">LeadingLightFront</mat-option>
+                <mat-option value="LeadingLightRear">LeadingLightRear</mat-option>
+                <mat-option value="BeaconCardinalN">BeaconCardinalN</mat-option>
+                <mat-option value="BeaconCardinalE">BeaconCardinalE</mat-option>
+                <mat-option value="BeaconCardinalS">BeaconCardinalS</mat-option>
+                <mat-option value="BeaconCardinalW">BeaconCardinalW</mat-option>
+                <mat-option value="BeaconPortHand">BeaconPortHand</mat-option>
+                <mat-option value="BeaconStarboardHand">BeaconStarboardHand</mat-option>
+                <mat-option value="BeaconPreferredChannelPortHand">BeaconPreferredChannelPortHand
+                </mat-option>
+                <mat-option value="BeaconPreferredChannelStarboardHand">BeaconPreferredChannelStarboardHand
+                </mat-option>
+                <mat-option value="BeaconIsolatedDanger">BeaconIsolatedDanger</mat-option>
+                <mat-option value="BeaconSafeWater">BeaconSafeWater</mat-option>
+                <mat-option value="BeaconSpecialMark">BeaconSpecialMark</mat-option>
+                <mat-option value="CardinalMarkN">CardinalMarkN</mat-option>
+                <mat-option value="CardinalMarkE">CardinalMarkE</mat-option>
+                <mat-option value="CardinalMarkS">CardinalMarkS</mat-option>
+                <mat-option value="CardinalMarkW">CardinalMarkW</mat-option>
+                <mat-option value="PortHandMark">PortHandMark</mat-option>
+                <mat-option value="StarboardHandMark">StarboardHandMark</mat-option>
+                <mat-option value="PreferredChannelPortHand">PreferredChannelPortHand</mat-option>
+                <mat-option value="PreferredChannelStarboardHand">PreferredChannelStarboardHand</mat-option>
+                <mat-option value="IsolatedDanger">IsolatedDanger</mat-option>
+                <mat-option value="SafeWater">SafeWater</mat-option>
+                <mat-option value="SpecialMark">SpecialMark</mat-option>
+                <mat-option value="LightVesselOrLANBYOrRigs">LightVesselOrLANBYOrRigs</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="control-margins" style="width: 45%;">
+              <mat-label>Target Type</mat-label>
+              <mat-select [(value)]="generator.targetType">
+                <mat-option value="ClassA">Class A</mat-option>
+                <mat-option value="ClassB">Class B</mat-option>
+                <mat-option value="Aton">Aton</mat-option>
+                <mat-option value="BaseStation">Base Station</mat-option>
+                <mat-option value="SAR">SAR</mat-option>
+                <mat-option value="Uncategorized">Uncategorized</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="control-margins" style="width: 45%;">
+              <mat-label>Track Type</mat-label>
+              <mat-select [(value)]="generator.trackType">
+                <mat-option value="AIS">AIS</mat-option>
+                <mat-option value="Fusion">Fusion</mat-option>
+                <mat-option value="Radar">Radar</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <section>
+            <mat-checkbox class="control-margins" [(ngModel)]="generator.repeat">Repeat forever
+            </mat-checkbox>
+            <mat-checkbox class="control-margins" [(ngModel)]="generator.offPosition">Out of position
+            </mat-checkbox>
+            <mat-checkbox class="control-margins" [(ngModel)]="generator.simulated">Simulated
+            </mat-checkbox>
+          </section>
+          <div class="flex-container " style="margin-top:10px">
+            <mat-form-field appearance="outline" class="dimension">
+              <input matInput type="number" pattern="[0-9]*" placeholder="Meters"
+                [(ngModel)]="generator.dimensionToStarboardMeters">
+              <mat-hint>to starboard</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="dimension">
+              <input matInput type="number" pattern="[0-9]*" placeholder="Meters"
+                [(ngModel)]="generator.dimensionToSternMeters">
+              <mat-hint>to stern</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="dimension">
+              <input matInput type="number" pattern="[0-9]*" placeholder="Meters"
+                [(ngModel)]="generator.dimensionToBowMeters">
+              <mat-hint>to bow</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="dimension">
+              <input matInput type="number" pattern="[0-9]*" placeholder="Meters"
+                [(ngModel)]="generator.dimensionToPortMeters">
+              <mat-hint>to port</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

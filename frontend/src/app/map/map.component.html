@@ -1,0 +1,10 @@
+<div>
+    <div style="height: 100vh;" leaflet [leafletOptions]="options" (leafletMapReady)="guiMapReady($event)"
+        (leafletClick)="guiClick($event)" (leafletDoubleClick)="guiDoubleClick($event)">
+        <div>
+            <h1 *ngIf="state.mode == state.modes.AddPoint"
+                style="top: 95%; margin:auto; width: max-content; position: relative; z-index: 999999; background:#303030;">
+                {{state.hintText}}</h1>
+        </div>
+    </div>
+</div>

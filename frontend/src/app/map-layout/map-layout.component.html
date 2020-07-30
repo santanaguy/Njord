@@ -1,0 +1,10 @@
+<mat-drawer-container>
+    <mat-drawer disableClose mode="side" opened>
+        <app-position-generator-manager *ngIf="showPositionGenerators"></app-position-generator-manager>
+        <replay-widget style="width:100%; position: absolute; bottom: 80px;" *ngIf="!showPositionGenerators"></replay-widget>
+    </mat-drawer>
+    <mat-drawer-content>
+        <app-map [model]="model"></app-map>
+        <app-actions-panel style="bottom:10px;left:10px;position: absolute;z-index: 9999;"></app-actions-panel>
+    </mat-drawer-content>
+</mat-drawer-container>

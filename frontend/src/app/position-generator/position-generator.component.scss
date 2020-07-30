@@ -1,0 +1,67 @@
+.flex-container {
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-around;
+}
+::ng-deep.mat-tab-label, ::ng-deep.mat-tab-label-active{
+  min-width: 40px!important;
+  padding: 3px!important;
+  margin: 3px!important;
+  width: 100px;
+ }
+.dimension{
+  width: 20%;
+}
+
+.mat-expansion-panel{
+  background-color: #606160;
+}
+
+.mat-tab-labels > .mat-tab-label:nth-child(3){
+  margin-left: 40px;
+}
+.dimensions-div-title{
+  margin-top:-15px;
+  margin-bottom: 0px; 
+  background: #424242; 
+  width:200px; 
+  margin-left: 20px; 
+  text-align: center;
+}
+
+.checkbox-margin{
+  margin-top:15px
+}
+
+.mat-button-toggle-checked {
+  background-color: green;
+  
+}
+
+.control-margins{
+  margin: 0px 10px 10px 0px;
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance:textfield;
+}
+
+.mat-expansion-panel-body{
+  padding:0px !important
+}

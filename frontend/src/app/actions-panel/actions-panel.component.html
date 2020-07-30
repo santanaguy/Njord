@@ -1,0 +1,11 @@
+<div style="display: flex; flex-direction: column;">
+    <button mat-fab style="background-color: #424242; margin-bottom: 10px;color:white" (click)="guiReplayModeClicked()" *ngIf="guiReplayButtonVisible()">
+        <mat-icon>replay</mat-icon>
+    </button>
+    <button mat-fab style="background-color: darkred; margin-bottom: 10px;color:white" (click)="guiExitReplayModeClicked()" *ngIf="inReplay">
+        <mat-icon>close</mat-icon>
+    </button>
+    <button mat-fab style="background-color: #007100; margin-bottom: 10px;color:white" (click)="guiSaveClicked()">
+        <mat-icon>save_alt</mat-icon>
+    </button>
+</div>

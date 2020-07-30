@@ -1,0 +1,9 @@
+<mat-list>
+    <mat-list-item *ngFor="let result of results" style="color:black">
+      <mat-icon style="color:red" *ngIf="result.success == false">error</mat-icon>
+      <mat-icon style="color:green" *ngIf="result.success == true">check_circle</mat-icon>
+      <span>{{result.code}} - {{result.message}}</span>
+      <mat-divider style="background-color:black"></mat-divider>
+    </mat-list-item>
+  </mat-list>
+  

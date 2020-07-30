@@ -1,0 +1,35 @@
+<div>
+    <div>
+        <mat-form-field appearance="outline" style="width: 80%; padding:10px">
+            <mat-select [(ngModel)]="targetInfoSelected" (selectionChange)="selectedTargetChanged()" [disabled]="!scenarioFacade.canChangeCurrentTarget">
+                <mat-option *ngFor="let target of targetInfoList" [value]="target">
+                    {{targetDescription(target)}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+        <button mat-stroked-button matTooltip="Delete this target" color="warn" (click)="onDeletingTarget()" [disabled]="!scenarioFacade.canDeleteTarget">
+            <mat-icon>delete</mat-icon>
+        </button>
+        <mat-divider></mat-divider>
+    </div>
+    <h1 *ngIf="targetInfoSelected == null" style="text-align: center;">Double click on the map to add a new target or
+        click one to select</h1>
+    <div *ngIf="targetInfoSelected != null" style="display: flex; flex-direction: column; ">
+        <button mat-button (click)="onAdding()" matTooltip="Add new generator"
+            style="background-color: #007100; margin-bottom: 10px;" [disabled]="!scenarioFacade.canAddPositionGenerator">
+            <mat-icon>add</mat-icon>
+        </button>
+        <div *ngFor="let item of targetInfoSelected.generatorsInfo">
+            <app-position-generator (deleting)="onDeletingGenerator(item)" [generator]="item.generator"
+                (duplicating)="onDuplicating(item)" [collapsed]="item.collapsed"
+                style="display: inline-block;overflow:hidden; width:100%">
+            </app-position-generator>
+        </div>
+    </div>
+    <div style="display:flex;top:92%;position:absolute" *ngIf="false">
+        <h2 style="margin-right:10px; width:350px"></h2>
+        <button mat-raised-button style="background-color:green" >
+            <mat-icon>check</mat-icon>
+        </button>
+    </div>
+</div>
